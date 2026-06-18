@@ -24,7 +24,7 @@ export default async function ClientPage({
     .order('sort_order')
 
   return (
-    <main className="min-h-screen bg-zinc-950 text-white">
+    <main className="min-h-screen bg-white text-black">
       <ClientBoard job={job} initialScenes={scenes ?? []} />
     </main>
   )

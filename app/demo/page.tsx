@@ -17,6 +17,9 @@ const demoJob: Job = {
   created_at: '2026-06-18',
 }
 
+// Same job, but no QTake stream attached yet — the "Watch live" option disappears.
+const demoJobNoStream: Job = { ...demoJob, id: 'demo-job-2', qtake_url: null }
+
 const demoScenes: Scene[] = [
   { id: '1', job_id: 'demo-job', scene_number: '1A', title: 'Int. kitchen — hero pours coffee', location: 'Studio A', unit: 'a', status: 'complete', sort_order: 0, updated_at: '' },
   { id: '2', job_id: 'demo-job', scene_number: '2A', title: 'Product CU — phone on table', location: 'Studio A', unit: 'a', status: 'inprogress', sort_order: 1, updated_at: '' },
@@ -26,25 +29,52 @@ const demoScenes: Scene[] = [
   { id: '6', job_id: 'demo-job', scene_number: '2B', title: 'Ext. garden — golden hour wide', location: 'Sandton', unit: 'b', status: 'upcoming', sort_order: 5, updated_at: '' },
 ]
 
+function Panel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="rounded-2xl overflow-hidden border border-white/10">{children}</div>
+  )
+}
+
 export default function DemoPage() {
   return (
-    <main className="min-h-screen bg-black text-white">
-      <div className="max-w-5xl mx-auto p-5">
-        <p className="text-xs uppercase tracking-[0.25em] text-amber-500 mb-6">
+    <main className="min-h-screen bg-zinc-900 text-white">
+      <div className="max-w-5xl mx-auto p-5 sm:p-8">
+        <p className="text-xs uppercase tracking-[0.25em] text-zinc-500 mb-8">
           Local preview — seed data
         </p>
+
         <div className="grid lg:grid-cols-2 gap-8">
           <section>
-            <h2 className="text-sm text-zinc-500 mb-3">Operator board <code className="text-zinc-600">/op/[token]</code></h2>
-            <div className="rounded-3xl border border-white/10 overflow-hidden bg-zinc-950">
-              <OperatorBoard job={demoJob} initialScenes={demoScenes} />
-            </div>
+            <h2 className="text-sm text-zinc-400 mb-3">
+              Operator board <code className="text-zinc-600">/op/[token]</code>
+            </h2>
+            <Panel>
+              <div className="bg-zinc-950">
+                <OperatorBoard job={demoJob} initialScenes={demoScenes} />
+              </div>
+            </Panel>
           </section>
+
           <section>
-            <h2 className="text-sm text-zinc-500 mb-3">Client portal <code className="text-zinc-600">/job/[token]</code></h2>
-            <div className="rounded-3xl border border-white/10 overflow-hidden bg-zinc-950">
-              <ClientBoard job={demoJob} initialScenes={demoScenes} />
-            </div>
+            <h2 className="text-sm text-zinc-400 mb-3">
+              Client shot list <code className="text-zinc-600">/job/[token]</code>
+            </h2>
+            <Panel>
+              <div className="bg-white">
+                <ClientBoard job={demoJob} initialScenes={demoScenes} />
+              </div>
+            </Panel>
+          </section>
+
+          <section>
+            <h2 className="text-sm text-zinc-400 mb-3">
+              Client shot list — <span className="text-zinc-500">no stream attached</span> (no “Watch live”)
+            </h2>
+            <Panel>
+              <div className="bg-white">
+                <ClientBoard job={demoJobNoStream} initialScenes={demoScenes} />
+              </div>
+            </Panel>
           </section>
         </div>
       </div>
