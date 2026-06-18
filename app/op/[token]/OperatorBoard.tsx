@@ -12,6 +12,8 @@ type Props = {
 export default function OperatorBoard({ job, initialScenes }: Props) {
   const [scenes, setScenes] = useState<Scene[]>(initialScenes)
   const [activeUnit, setActiveUnit] = useState<Unit>('a')
+  const [online, setOnline] = useState(true)
+  const [undoScene, setUndoScene] = useState<Scene | null>(null)
 
   useEffect(() => {
     const client = createSupabaseClient()
@@ -30,6 +32,26 @@ export default function OperatorBoard({ job, initialScenes }: Props) {
 
     return () => { client.removeChannel(channel) }
   }, [job.id])
+
+  // Connection indicator — the set's signal is rarely perfect
+  useEffect(() => {
+    setOnline(navigator.onLine)
+    const up = () => setOnline(true)
+    const down = () => setOnline(false)
+    window.addEventListener('online', up)
+    window.addEventListener('offline', down)
+    return () => {
+      window.removeEventListener('online', up)
+      window.removeEventListener('offline', down)
+    }
+  }, [])
+
+  // Auto-dismiss the undo prompt after a few seconds
+  useEffect(() => {
+    if (!undoScene) return
+    const t = setTimeout(() => setUndoScene(null), 6000)
+    return () => clearTimeout(t)
+  }, [undoScene])
 
   async function startScene(scene: Scene) {
     const client = createSupabaseClient()
@@ -54,9 +76,26 @@ export default function OperatorBoard({ job, initialScenes }: Props) {
   }
 
   async function movingOn(scene: Scene) {
+    // If nothing else is left to shoot, this is the wrap — confirm it.
+    const remaining = scenes.filter(
+      s => s.id !== scene.id && (s.status === 'upcoming' || s.status === 'inprogress')
+    )
+    if (remaining.length === 0) {
+      const ok = window.confirm('This is the last scene. Wrap the shoot?')
+      if (!ok) return
+    }
+
     const client = createSupabaseClient()
     await client.from('scenes').update({ status: 'complete' }).eq('id', scene.id)
     setScenes(prev => prev.map(s => (s.id === scene.id ? { ...s, status: 'complete' } : s)))
+    setUndoScene(scene)
+  }
+
+  async function undoMovingOn(scene: Scene) {
+    const client = createSupabaseClient()
+    await client.from('scenes').update({ status: 'inprogress' }).eq('id', scene.id)
+    setScenes(prev => prev.map(s => (s.id === scene.id ? { ...s, status: 'inprogress' } : s)))
+    setUndoScene(null)
   }
 
   const isMultiUnit = job.units === 2
@@ -93,6 +132,13 @@ export default function OperatorBoard({ job, initialScenes }: Props) {
             <p className="text-xs text-zinc-500">{totalDone}/{totalScenes} done</p>
           </div>
         </div>
+
+        {!online && (
+          <div className="mt-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-red-950/50 border border-red-900/60">
+            <span className="h-2 w-2 rounded-full bg-red-500" />
+            <p className="text-xs text-red-300">Offline — changes will sync when signal returns</p>
+          </div>
+        )}
 
         {/* Progress bar */}
         <div className="mt-3 h-1 bg-zinc-800 rounded-full overflow-hidden">
@@ -200,6 +246,23 @@ export default function OperatorBoard({ job, initialScenes }: Props) {
                 </svg>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Undo toast */}
+      {undoScene && (
+        <div className="fixed inset-x-0 bottom-5 px-5 z-50">
+          <div className="max-w-lg mx-auto flex items-center justify-between gap-3 px-4 py-3 bg-zinc-100 text-black rounded-2xl shadow-2xl">
+            <p className="text-sm font-medium truncate">
+              Scene {undoScene.scene_number} wrapped
+            </p>
+            <button
+              onClick={() => undoMovingOn(undoScene)}
+              className="text-sm font-semibold px-4 py-1.5 rounded-full bg-black text-white shrink-0 active:scale-95 transition-transform"
+            >
+              Undo
+            </button>
           </div>
         </div>
       )}
