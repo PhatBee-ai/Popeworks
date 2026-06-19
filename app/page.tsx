@@ -1,4 +1,4 @@
-import { LogoMark, Wordmark } from '@/components/Logo'
+import { LogoMark, LogoFull } from '@/components/Logo'
 
 const CLIENTS = [
   'Wunderman Thompson',
@@ -217,9 +217,8 @@ export default function Home() {
       {/* ---------- Founder ---------- */}
       <section aria-labelledby="founder-heading" className="border-b-4 border-black px-5 sm:px-8 py-20 sm:py-28">
         <div className="max-w-6xl mx-auto grid sm:grid-cols-[1fr_1.4fr] gap-12 items-center">
-          <div className="border-4 border-black p-10 shadow-[10px_10px_0_#000] flex flex-col items-center gap-5">
-            <LogoMark className="w-32 h-32" />
-            <Wordmark className="text-3xl text-center" />
+          <div className="border-4 border-black p-10 shadow-[10px_10px_0_#000] flex justify-center">
+            <LogoFull className="h-64 w-[171px]" />
           </div>
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.3em] mb-4">The operator</p>
