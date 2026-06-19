@@ -29,10 +29,23 @@ export interface Scene {
 }
 
 export function createSupabaseClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!url || !key) {
+    throw new Error(
+      'Supabase is not configured — set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.'
+    )
+  }
+  return createClient(url, key)
 }
 
-export const supabase = createSupabaseClient()
+// Lazily created on first use so the build (and the marketing site) never
+// depends on Supabase env vars being present — only the data-backed pages do.
+let cached: ReturnType<typeof createSupabaseClient> | null = null
+
+export const supabase = new Proxy({} as ReturnType<typeof createSupabaseClient>, {
+  get(_target, prop, receiver) {
+    if (!cached) cached = createSupabaseClient()
+    return Reflect.get(cached, prop, receiver)
+  },
+})

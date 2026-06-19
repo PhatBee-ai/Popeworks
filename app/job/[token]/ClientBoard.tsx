@@ -13,7 +13,12 @@ export default function ClientBoard({ job, initialScenes }: Props) {
   const [scenes, setScenes] = useState<Scene[]>(initialScenes)
 
   useEffect(() => {
-    const client = createSupabaseClient()
+    let client: ReturnType<typeof createSupabaseClient>
+    try {
+      client = createSupabaseClient()
+    } catch {
+      return // no Supabase configured — show initial data without live updates
+    }
     const channel = client
       .channel(`client-scenes-${job.id}`)
       .on(

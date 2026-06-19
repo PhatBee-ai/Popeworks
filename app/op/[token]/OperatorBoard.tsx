@@ -16,7 +16,12 @@ export default function OperatorBoard({ job, initialScenes }: Props) {
   const [undoScene, setUndoScene] = useState<Scene | null>(null)
 
   useEffect(() => {
-    const client = createSupabaseClient()
+    let client: ReturnType<typeof createSupabaseClient>
+    try {
+      client = createSupabaseClient()
+    } catch {
+      return // no Supabase configured — show initial data without live updates
+    }
     const channel = client
       .channel(`op-scenes-${job.id}`)
       .on(
