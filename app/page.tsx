@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import { LogoMark } from '@/components/Logo'
 
 const DIRECTORS = [
@@ -42,9 +43,59 @@ const GEAR = [
 ]
 
 const TEAM = [
-  { name: 'Thando Ntombela', role: 'Founder & lead VT', aka: 'The Bearded Pope' },
-  { name: 'Zack Gumede', role: 'VT operator', aka: null },
-  { name: 'Tshidiso Makhoba', role: 'VT operator', aka: null },
+  {
+    name: 'Thando Ntombela',
+    role: 'Founder & lead VT',
+    aka: 'The Bearded Pope',
+    photo: null,
+    bio: 'Founder of PopeWorks. Years on the biggest local and international commercials, trusted by top directors and agencies for streaming and video assist.',
+  },
+  {
+    name: 'Zack Gumede',
+    role: 'VT operator',
+    aka: null,
+    photo: '/brand/team/zack.jpg',
+    bio: 'VT operator running playback and streaming on set — keeping every monitor and feed locked across the production.',
+  },
+  {
+    name: 'Tshidiso Makhoba',
+    role: 'VTO · VT assistant',
+    aka: null,
+    photo: '/brand/team/tshidiso.jpg',
+    bio: 'Three-plus years across local and international productions. The assistant lead operators rely on in high-demand, complex environments — and the VTO running the desk on standard shoots. Calm under pressure, fast to solve problems.',
+  },
+]
+
+// Sourced from Thando's CV — monochrome logos for the most recognisable brands.
+const CLIENT_LOGOS: [string, string][] = [
+  ['netflix', 'Netflix'],
+  ['hbo', 'HBO'],
+  ['cocacola', 'Coca-Cola'],
+  ['nike', 'Nike'],
+  ['adidas', 'Adidas'],
+  ['samsung', 'Samsung'],
+  ['redbull', 'Red Bull'],
+  ['mercedes', 'Mercedes-Benz'],
+  ['emirates', 'Emirates'],
+  ['kfc', 'KFC'],
+  ['uber', 'Uber'],
+  ['volkswagen', 'Volkswagen'],
+  ['renault', 'Renault'],
+  ['landrover', 'Land Rover'],
+  ['suzuki', 'Suzuki'],
+  ['logitech', 'Logitech'],
+  ['jbl', 'JBL'],
+  ['handm', 'H&M'],
+  ['tinder', 'Tinder'],
+  ['jameson', 'Jameson'],
+]
+
+const MORE_BRANDS = [
+  'Showmax', 'SuperSport', 'DStv', 'Vodacom', 'MTN', 'Telkom', 'Cell C',
+  'Nedbank', 'FNB', 'Standard Bank', 'Absa', 'Sanlam', 'Old Mutual', 'Hollard',
+  'Woolworths', 'Shoprite', 'Spar', 'Makro', 'Castle', 'Savanna', 'Heineken',
+  'Amstel', 'Smirnoff', 'Sprite', 'Gatorade', 'Nivea', 'Philips', 'Sasol',
+  'Chicken Licken', 'Spur', 'Maybelline',
 ]
 
 const STEPS = [
@@ -85,6 +136,7 @@ export default function Home() {
           </a>
           <div className="hidden md:flex items-center gap-7 text-sm font-medium uppercase tracking-wide">
             <a href="#work" className="hover:underline decoration-4 underline-offset-4">Directors</a>
+            <a href="#brands" className="hover:underline decoration-4 underline-offset-4">Brands</a>
             <a href="#services" className="hover:underline decoration-4 underline-offset-4">Services</a>
             <a href="#gear" className="hover:underline decoration-4 underline-offset-4">Gear</a>
             <a href="#team" className="hover:underline decoration-4 underline-offset-4">Team</a>
@@ -191,6 +243,40 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ---------- Brands & broadcasters ---------- */}
+      <section id="brands" aria-labelledby="brands-heading" className="border-b-4 border-black px-5 sm:px-8 py-20 sm:py-28">
+        <div className="max-w-6xl mx-auto">
+          <p className="text-xs font-bold uppercase tracking-[0.3em] mb-4">Brands &amp; broadcasters</p>
+          <h2 id="brands-heading" className="font-display uppercase text-4xl sm:text-6xl leading-[0.9] tracking-tight max-w-3xl">
+            A decade on the biggest commercials.
+          </h2>
+
+          <div className="mt-12 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 border-t-2 border-l-2 border-black">
+            {CLIENT_LOGOS.map(([slug, name]) => (
+              <div
+                key={slug}
+                className="border-b-2 border-r-2 border-black flex items-center justify-center p-6 sm:p-8 aspect-[3/2] hover:bg-black transition-colors group"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`/brand/clients/${slug}.svg`}
+                  alt={name}
+                  className="max-h-8 sm:max-h-10 w-auto object-contain transition group-hover:invert"
+                  loading="lazy"
+                />
+              </div>
+            ))}
+          </div>
+
+          <p className="mt-12 text-xs font-bold uppercase tracking-[0.3em] mb-4 text-zinc-500">Also on set with</p>
+          <div className="flex flex-wrap gap-x-5 gap-y-2">
+            {MORE_BRANDS.map(b => (
+              <span key={b} className="font-display text-base sm:text-lg uppercase tracking-tight text-zinc-700">{b}</span>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ---------- How it works ---------- */}
       <section id="how" aria-labelledby="how-heading" className="border-b-4 border-black px-5 sm:px-8 py-20 sm:py-28">
         <div className="max-w-6xl mx-auto">
@@ -272,23 +358,30 @@ export default function Home() {
           </p>
 
           <div className="mt-14 grid sm:grid-cols-3 gap-6">
-            {TEAM.map((m, i) => (
+            {TEAM.map(m => (
               <div
                 key={m.name}
-                className={`border-4 border-black p-8 shadow-[8px_8px_0_#000] ${i === 0 ? 'bg-black text-white shadow-[8px_8px_0_#000]' : 'bg-white'}`}
+                className="border-4 border-black bg-white shadow-[8px_8px_0_#000] overflow-hidden flex flex-col"
               >
-                {i === 0 ? (
-                  <LogoMark variant="light" className="w-16 h-16" />
-                ) : (
-                  <span className="font-display text-4xl uppercase">
-                    {m.name.split(' ').map(p => p[0]).join('')}
-                  </span>
-                )}
-                <h3 className="mt-6 font-display text-xl sm:text-2xl uppercase tracking-tight">{m.name}</h3>
-                <p className={`mt-1 text-sm font-bold uppercase tracking-wide ${i === 0 ? 'text-zinc-400' : 'text-zinc-500'}`}>
-                  {m.role}
-                </p>
-                {m.aka && <p className="mt-0.5 text-xs italic">“{m.aka}”</p>}
+                <div className="relative aspect-[4/5] border-b-4 border-black flex items-center justify-center bg-zinc-100">
+                  {m.photo ? (
+                    <Image
+                      src={m.photo}
+                      alt={m.name}
+                      fill
+                      sizes="(max-width: 640px) 100vw, 360px"
+                      className="object-cover grayscale"
+                    />
+                  ) : (
+                    <LogoMark className="w-28 h-28" />
+                  )}
+                </div>
+                <div className="p-6 flex-1">
+                  <h3 className="font-display text-xl sm:text-2xl uppercase tracking-tight">{m.name}</h3>
+                  <p className="mt-1 text-xs font-bold uppercase tracking-wide text-zinc-500">{m.role}</p>
+                  {m.aka && <p className="mt-0.5 text-xs italic">“{m.aka}”</p>}
+                  <p className="mt-3 text-sm leading-relaxed text-zinc-700">{m.bio}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -309,16 +402,18 @@ export default function Home() {
           </p>
           <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4">
             <a
-              href="mailto:hello@popeworks.co.za?subject=Shoot%20booking"
+              href="https://wa.me/27763170744?text=Hi%20PopeWorks%2C%20I%27d%20like%20to%20book%20a%20shoot"
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex justify-center px-8 py-4 font-bold uppercase bg-white text-black border-2 border-white shadow-[6px_6px_0_#fff] hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-[3px_3px_0_#fff] transition-all"
             >
-              hello@popeworks.co.za
+              WhatsApp · 076 317 0744
             </a>
             <a
-              href="https://wa.me/27000000000"
+              href="mailto:realphonetic@gmail.com?subject=Shoot%20booking"
               className="inline-flex justify-center px-8 py-4 font-bold uppercase bg-black text-white border-2 border-white shadow-[6px_6px_0_#fff] hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-[3px_3px_0_#fff] transition-all"
             >
-              WhatsApp us
+              Email us
             </a>
           </div>
         </div>
