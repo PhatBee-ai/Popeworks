@@ -1,36 +1,50 @@
-import { LogoMark, LogoFull } from '@/components/Logo'
+import { LogoMark } from '@/components/Logo'
 
-const CLIENTS = [
-  'Wunderman Thompson',
-  'Ogilvy',
-  'VML',
-  'Netflix',
-  'Showmax',
-  'M-Net',
-  'Bioscope',
+const DIRECTORS = [
+  'Greg Gray',
+  'Justice Mukheli',
+  'Lebogang Rasethaba',
+  'Monde',
+  'Rajay Singh',
+  'Tebza Malope',
+  'Thabang Moleya',
+  'Zee Ntuli',
+  'Zwelethu Radebe',
 ]
 
 const SERVICES = [
   {
     n: '01',
-    title: 'Live HD streaming',
-    body: 'Broadcast-grade video village pushed to any device, anywhere. The take, the moment it happens.',
+    title: 'Streaming video',
+    body: 'Broadcast-grade live streaming pushed to any device, anywhere — the take, the moment it happens.',
   },
   {
     n: '02',
-    title: 'Multi-cam VTV',
-    body: 'Two units, multiple cameras, multiple locations. Every angle routed and labelled.',
+    title: 'Video assist (VT)',
+    body: 'On-set playback and monitoring on QTake. Multi-cam, multi-unit — every angle routed and labelled.',
   },
   {
     n: '03',
-    title: 'Scene tracking',
-    body: 'A live board for the whole production. Upcoming, shooting now, wrapped.',
+    title: 'World-class gear',
+    body: 'Everything needed to execute, supplied and run: QTake Standard & Pro, Sony monitors, Teradek wireless.',
   },
   {
     n: '04',
-    title: 'QTake integration',
-    body: 'Built on the playback tools your crew already trusts. We add the client layer.',
+    title: 'Live scene tracking',
+    body: 'A real-time board for the whole production — upcoming, shooting now, wrapped — on one shareable link.',
   },
+]
+
+const GEAR = [
+  { name: 'QTake', detail: 'Standard & Pro — industry-standard video assist and playback' },
+  { name: 'Sony monitors', detail: 'Calibrated, broadcast-grade reference monitoring' },
+  { name: 'Teradek', detail: 'Zero-delay wireless video transmission' },
+]
+
+const TEAM = [
+  { name: 'Thando Ntombela', role: 'Founder & lead VT', aka: 'The Bearded Pope' },
+  { name: 'Zack Gumede', role: 'VT operator', aka: null },
+  { name: 'Tshidiso Makhoba', role: 'VT operator', aka: null },
 ]
 
 const STEPS = [
@@ -69,10 +83,11 @@ export default function Home() {
               </span>
             </span>
           </a>
-          <div className="hidden sm:flex items-center gap-8 text-sm font-medium uppercase tracking-wide">
-            <a href="#work" className="hover:underline decoration-4 underline-offset-4">Work</a>
-            <a href="#how" className="hover:underline decoration-4 underline-offset-4">How it works</a>
+          <div className="hidden md:flex items-center gap-7 text-sm font-medium uppercase tracking-wide">
+            <a href="#work" className="hover:underline decoration-4 underline-offset-4">Directors</a>
             <a href="#services" className="hover:underline decoration-4 underline-offset-4">Services</a>
+            <a href="#gear" className="hover:underline decoration-4 underline-offset-4">Gear</a>
+            <a href="#team" className="hover:underline decoration-4 underline-offset-4">Team</a>
           </div>
           <a
             href="#contact"
@@ -111,9 +126,9 @@ export default function Home() {
             </h1>
 
             <p className="mt-8 max-w-lg text-base sm:text-lg leading-relaxed">
-              PopeWorks streams your shoot in broadcast HD and tracks every scene
-              in real time — so the director, the agency and the brand are all in
-              the room, wherever they are.
+              Streaming video and video assist for film and commercial shoots —
+              with all the world-class gear required to execute. So the director,
+              the agency and the brand are all in the room, wherever they are.
             </p>
 
             <div className="mt-10 flex flex-col sm:flex-row gap-4">
@@ -156,13 +171,23 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ---------- Clients ---------- */}
-      <section id="work" aria-label="Selected clients" className="border-b-4 border-black px-5 sm:px-8 py-14">
-        <p className="text-center text-xs font-bold uppercase tracking-[0.3em] mb-8">Trusted on set by</p>
-        <div className="max-w-5xl mx-auto flex flex-wrap justify-center gap-x-8 gap-y-3">
-          {CLIENTS.map(c => (
-            <span key={c} className="font-display text-lg sm:text-2xl uppercase tracking-tight">{c}</span>
-          ))}
+      {/* ---------- Directors ---------- */}
+      <section id="work" aria-labelledby="directors-heading" className="border-b-4 border-black px-5 sm:px-8 py-16 sm:py-24">
+        <div className="max-w-6xl mx-auto">
+          <p className="text-xs font-bold uppercase tracking-[0.3em] mb-4">Directors we've worked with</p>
+          <h2 id="directors-heading" className="font-display uppercase text-4xl sm:text-6xl leading-[0.9] tracking-tight max-w-3xl">
+            On set with South Africa's best.
+          </h2>
+          <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 border-t-2 border-l-2 border-black">
+            {DIRECTORS.map(d => (
+              <div
+                key={d}
+                className="border-b-2 border-r-2 border-black px-5 py-6 font-display text-xl sm:text-2xl uppercase tracking-tight hover:bg-black hover:text-white transition-colors"
+              >
+                {d}
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -214,24 +239,58 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ---------- Founder ---------- */}
-      <section aria-labelledby="founder-heading" className="border-b-4 border-black px-5 sm:px-8 py-20 sm:py-28">
-        <div className="max-w-6xl mx-auto grid sm:grid-cols-[1fr_1.4fr] gap-12 items-center">
-          <div className="border-4 border-black p-10 shadow-[10px_10px_0_#000] flex justify-center">
-            <LogoFull className="h-64 w-[171px]" />
+      {/* ---------- Gear ---------- */}
+      <section id="gear" aria-labelledby="gear-heading" className="border-b-4 border-black px-5 sm:px-8 py-20 sm:py-28">
+        <div className="max-w-6xl mx-auto">
+          <p className="text-xs font-bold uppercase tracking-[0.3em] mb-4">The kit</p>
+          <h2 id="gear-heading" className="font-display uppercase text-4xl sm:text-6xl leading-[0.9] tracking-tight max-w-3xl">
+            World-class gear, run by people who know it.
+          </h2>
+          <div className="mt-14 grid sm:grid-cols-3 gap-6">
+            {GEAR.map(g => (
+              <div key={g.name} className="border-4 border-black p-8 shadow-[8px_8px_0_#000]">
+                <h3 className="font-display text-2xl sm:text-3xl uppercase tracking-tight">{g.name}</h3>
+                <p className="mt-3 text-sm leading-relaxed">{g.detail}</p>
+              </div>
+            ))}
           </div>
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.3em] mb-4">The operator</p>
-            <h2 id="founder-heading" className="font-display uppercase text-3xl sm:text-5xl leading-[0.9] tracking-tight">
-              A decade in the video village, now streamed.
-            </h2>
-            <p className="mt-6 leading-relaxed max-w-xl">
-              PopeWorks is run by Thando Ntombela — the Bearded Pope — a VT
-              operator who has spent years on commercial and film sets keeping
-              directors, agencies and clients watching the same picture. The
-              physical board on the monitor wall became a live link. The
-              clipboard became a real-time scene tracker. Same craft, no walls.
-            </p>
+        </div>
+      </section>
+
+      {/* ---------- Team ---------- */}
+      <section id="team" aria-labelledby="team-heading" className="border-b-4 border-black px-5 sm:px-8 py-20 sm:py-28">
+        <div className="max-w-6xl mx-auto">
+          <p className="text-xs font-bold uppercase tracking-[0.3em] mb-4">The team</p>
+          <h2 id="team-heading" className="font-display uppercase text-4xl sm:text-6xl leading-[0.9] tracking-tight max-w-3xl">
+            VT operators under PopeWorks.
+          </h2>
+          <p className="mt-6 leading-relaxed max-w-2xl">
+            Founded by Thando Ntombela — the Bearded Pope — PopeWorks has spent
+            years on commercial and film sets keeping directors, agencies and
+            clients watching the same picture. Same craft, now streamed, with a
+            crew of operators behind it.
+          </p>
+
+          <div className="mt-14 grid sm:grid-cols-3 gap-6">
+            {TEAM.map((m, i) => (
+              <div
+                key={m.name}
+                className={`border-4 border-black p-8 shadow-[8px_8px_0_#000] ${i === 0 ? 'bg-black text-white shadow-[8px_8px_0_#000]' : 'bg-white'}`}
+              >
+                {i === 0 ? (
+                  <LogoMark variant="light" className="w-16 h-16" />
+                ) : (
+                  <span className="font-display text-4xl uppercase">
+                    {m.name.split(' ').map(p => p[0]).join('')}
+                  </span>
+                )}
+                <h3 className="mt-6 font-display text-xl sm:text-2xl uppercase tracking-tight">{m.name}</h3>
+                <p className={`mt-1 text-sm font-bold uppercase tracking-wide ${i === 0 ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                  {m.role}
+                </p>
+                {m.aka && <p className="mt-0.5 text-xs italic">“{m.aka}”</p>}
+              </div>
+            ))}
           </div>
         </div>
       </section>
