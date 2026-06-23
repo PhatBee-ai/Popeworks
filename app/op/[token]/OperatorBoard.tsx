@@ -2,15 +2,44 @@
 
 import { useEffect, useState } from 'react'
 import { createSupabaseClient } from '@/lib/supabase'
-import type { Job, Scene, Unit } from '@/lib/supabase'
+import type { Job, Scene, ShootDay, Unit } from '@/lib/supabase'
 
 type Props = {
   job: Job
+  shootDays: ShootDay[]
   initialScenes: Scene[]
 }
 
-export default function OperatorBoard({ job, initialScenes }: Props) {
+function todayISO() {
+  const d = new Date()
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+}
+
+function defaultDayId(days: ShootDay[], scenes: Scene[]): string | null {
+  if (days.length === 0) return null
+  const today = todayISO()
+  const byDate = days.find(d => d.shoot_date === today)
+  if (byDate) return byDate.id
+  const inprog = scenes.find(s => s.status === 'inprogress')
+  if (inprog?.shoot_day_id) return inprog.shoot_day_id
+  return days[days.length - 1].id
+}
+
+function dayDateLabel(d: ShootDay | null) {
+  if (!d?.shoot_date) return d?.label || ''
+  return new Date(d.shoot_date).toLocaleDateString('en-ZA', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  })
+}
+
+export default function OperatorBoard({ job, shootDays, initialScenes }: Props) {
   const [scenes, setScenes] = useState<Scene[]>(initialScenes)
+  const [activeDayId, setActiveDayId] = useState<string | null>(() =>
+    defaultDayId(shootDays, initialScenes)
+  )
   const [activeUnit, setActiveUnit] = useState<Unit>('a')
   const [online, setOnline] = useState(true)
   const [undoScene, setUndoScene] = useState<Scene | null>(null)
@@ -27,18 +56,25 @@ export default function OperatorBoard({ job, initialScenes }: Props) {
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'scenes', filter: `job_id=eq.${job.id}` },
-        (payload) => {
-          setScenes(prev =>
-            prev.map(s => (s.id === payload.new.id ? (payload.new as Scene) : s))
-          )
+        payload => {
+          setScenes(prev => prev.map(s => (s.id === payload.new.id ? (payload.new as Scene) : s)))
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'scenes', filter: `job_id=eq.${job.id}` },
+        payload => {
+          const row = payload.new as Scene
+          setScenes(prev => (prev.some(s => s.id === row.id) ? prev : [...prev, row]))
         }
       )
       .subscribe()
 
-    return () => { client.removeChannel(channel) }
+    return () => {
+      client.removeChannel(channel)
+    }
   }, [job.id])
 
-  // Connection indicator — the set's signal is rarely perfect
   useEffect(() => {
     setOnline(navigator.onLine)
     const up = () => setOnline(true)
@@ -51,26 +87,23 @@ export default function OperatorBoard({ job, initialScenes }: Props) {
     }
   }, [])
 
-  // Auto-dismiss the undo prompt after a few seconds
   useEffect(() => {
     if (!undoScene) return
     const t = setTimeout(() => setUndoScene(null), 6000)
     return () => clearTimeout(t)
   }, [undoScene])
 
+  const dayScenes = scenes.filter(s => s.shoot_day_id === activeDayId)
+
   async function startScene(scene: Scene) {
     const client = createSupabaseClient()
-
-    const toComplete = scenes.filter(
+    const toComplete = dayScenes.filter(
       s => s.status === 'inprogress' && (job.units === 1 || s.unit === scene.unit)
     )
-
     for (const s of toComplete) {
       await client.from('scenes').update({ status: 'complete' }).eq('id', s.id)
     }
-
     await client.from('scenes').update({ status: 'inprogress' }).eq('id', scene.id)
-
     setScenes(prev =>
       prev.map(s => {
         if (s.id === scene.id) return { ...s, status: 'inprogress' }
@@ -81,15 +114,13 @@ export default function OperatorBoard({ job, initialScenes }: Props) {
   }
 
   async function movingOn(scene: Scene) {
-    // If nothing else is left to shoot, this is the wrap — confirm it.
-    const remaining = scenes.filter(
+    const remaining = dayScenes.filter(
       s => s.id !== scene.id && (s.status === 'upcoming' || s.status === 'inprogress')
     )
     if (remaining.length === 0) {
-      const ok = window.confirm('This is the last scene. Wrap the shoot?')
+      const ok = window.confirm('Last scene of the day. Wrap the day?')
       if (!ok) return
     }
-
     const client = createSupabaseClient()
     await client.from('scenes').update({ status: 'complete' }).eq('id', scene.id)
     setScenes(prev => prev.map(s => (s.id === scene.id ? { ...s, status: 'complete' } : s)))
@@ -103,38 +134,44 @@ export default function OperatorBoard({ job, initialScenes }: Props) {
     setUndoScene(null)
   }
 
+  const activeDay = shootDays.find(d => d.id === activeDayId) ?? null
   const isMultiUnit = job.units === 2
-  const visibleScenes = isMultiUnit
-    ? scenes.filter(s => s.unit === activeUnit)
-    : scenes
+  const isLongForm = job.type !== 'commercial'
 
+  const visibleScenes = isMultiUnit ? dayScenes.filter(s => s.unit === activeUnit) : dayScenes
   const nowShooting = visibleScenes.filter(s => s.status === 'inprogress')
   const upcoming = visibleScenes.filter(s => s.status === 'upcoming')
   const done = visibleScenes.filter(s => s.status === 'complete')
 
-  const totalScenes = scenes.length
-  const totalDone = scenes.filter(s => s.status === 'complete').length
-  const pct = totalScenes > 0 ? Math.round((totalDone / totalScenes) * 100) : 0
+  // Day-level progress
+  const dayTotal = dayScenes.length
+  const dayDone = dayScenes.filter(s => s.status === 'complete').length
+  const dayPct = dayTotal > 0 ? Math.round((dayDone / dayTotal) * 100) : 0
+
+  // Production-level progress
+  const prodTotal = scenes.length
+  const prodDone = scenes.filter(s => s.status === 'complete').length
+  const prodPct = prodTotal > 0 ? Math.round((prodDone / prodTotal) * 100) : 0
+  const dayIndex = shootDays.findIndex(d => d.id === activeDayId) + 1
 
   return (
     <div className="max-w-lg mx-auto p-5 pb-10">
       {/* Header */}
-      <div className="mb-6">
+      <div className="mb-5">
         <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-xs text-zinc-500 uppercase tracking-widest mb-0.5">
-              {new Date(job.shoot_date).toLocaleDateString('en-ZA', {
-                weekday: 'short',
-                day: 'numeric',
-                month: 'short',
-              })}
+          <div className="min-w-0">
+            <p className="text-xs text-zinc-500 uppercase tracking-widest mb-0.5">{job.title}</p>
+            <h1 className="text-lg font-medium leading-tight truncate">
+              {activeDay?.label || 'Day'}
+            </h1>
+            <p className="text-xs text-zinc-500 mt-0.5">
+              {dayDateLabel(activeDay)}
+              {activeDay?.location ? ` · ${activeDay.location}` : ''}
             </p>
-            <h1 className="text-lg font-medium leading-tight">{job.title}</h1>
-            <p className="text-xs text-zinc-500 mt-0.5">{job.location}</p>
           </div>
           <div className="text-right shrink-0">
-            <p className="text-2xl font-bold tabular-nums">{pct}%</p>
-            <p className="text-xs text-zinc-500">{totalDone}/{totalScenes} done</p>
+            <p className="text-2xl font-bold tabular-nums">{dayPct}%</p>
+            <p className="text-xs text-zinc-500">{dayDone}/{dayTotal} today</p>
           </div>
         </div>
 
@@ -145,13 +182,48 @@ export default function OperatorBoard({ job, initialScenes }: Props) {
           </div>
         )}
 
-        {/* Progress bar */}
+        {/* Day progress bar */}
         <div className="mt-3 h-1 bg-zinc-800 rounded-full overflow-hidden">
           <div
             className="h-full bg-white rounded-full transition-all duration-500"
-            style={{ width: `${pct}%` }}
+            style={{ width: `${dayPct}%` }}
           />
         </div>
+
+        {/* Production rollup (long-form) */}
+        {isLongForm && shootDays.length > 0 && (
+          <p className="mt-2 text-xs text-zinc-500">
+            Day {dayIndex} of {shootDays.length} · {prodDone}/{prodTotal} scenes wrapped ({prodPct}%)
+          </p>
+        )}
+
+        {/* Day selector */}
+        {shootDays.length > 1 && (
+          <div className="mt-4 flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+            {shootDays.map((d, i) => {
+              const dScenes = scenes.filter(s => s.shoot_day_id === d.id)
+              const dDone = dScenes.filter(s => s.status === 'complete').length
+              const allDone = dScenes.length > 0 && dDone === dScenes.length
+              const active = d.id === activeDayId
+              return (
+                <button
+                  key={d.id}
+                  onClick={() => setActiveDayId(d.id)}
+                  className={`shrink-0 px-3 py-2 rounded-lg text-xs font-medium transition-colors border ${
+                    active
+                      ? 'bg-white text-black border-white'
+                      : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:border-zinc-700'
+                  }`}
+                >
+                  <span className="block">{d.label || `Day ${i + 1}`}</span>
+                  <span className={`block text-[10px] ${active ? 'text-zinc-600' : 'text-zinc-600'}`}>
+                    {allDone ? '✓ wrapped' : `${dDone}/${dScenes.length}`}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        )}
 
         {/* Unit toggle */}
         {isMultiUnit && (
@@ -182,7 +254,9 @@ export default function OperatorBoard({ job, initialScenes }: Props) {
         </div>
       ) : (
         <div className="mb-6 flex items-center justify-center h-24 border border-dashed border-zinc-800 rounded-2xl">
-          <p className="text-sm text-zinc-600">Tap a scene to start</p>
+          <p className="text-sm text-zinc-600">
+            {dayTotal === 0 ? 'No scenes for this day yet' : 'Tap a scene to start'}
+          </p>
         </div>
       )}
 
@@ -201,7 +275,7 @@ export default function OperatorBoard({ job, initialScenes }: Props) {
         </a>
       )}
 
-      {/* Upcoming scenes */}
+      {/* Upcoming */}
       {upcoming.length > 0 && (
         <div className="mb-4">
           <p className="text-xs text-zinc-500 uppercase tracking-widest mb-2">Up next</p>
@@ -259,9 +333,7 @@ export default function OperatorBoard({ job, initialScenes }: Props) {
       {undoScene && (
         <div className="fixed inset-x-0 bottom-5 px-5 z-50">
           <div className="max-w-lg mx-auto flex items-center justify-between gap-3 px-4 py-3 bg-zinc-100 text-black rounded-2xl shadow-2xl">
-            <p className="text-sm font-medium truncate">
-              Scene {undoScene.scene_number} wrapped
-            </p>
+            <p className="text-sm font-medium truncate">Scene {undoScene.scene_number} wrapped</p>
             <button
               onClick={() => undoMovingOn(undoScene)}
               className="text-sm font-semibold px-4 py-1.5 rounded-full bg-black text-white shrink-0 active:scale-95 transition-transform"

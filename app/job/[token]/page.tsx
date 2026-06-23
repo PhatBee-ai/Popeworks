@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import ClientBoard from './ClientBoard'
+import type { ShootDay } from '@/lib/supabase'
 
 export default async function ClientPage({
   params,
@@ -17,6 +18,12 @@ export default async function ClientPage({
 
   if (!job) notFound()
 
+  const { data: days } = await supabase
+    .from('shoot_days')
+    .select('*')
+    .eq('job_id', job.id)
+    .order('sort_order')
+
   const { data: scenes } = await supabase
     .from('scenes')
     .select('*')
@@ -25,7 +32,11 @@ export default async function ClientPage({
 
   return (
     <main className="min-h-screen bg-white text-black">
-      <ClientBoard job={job} initialScenes={scenes ?? []} />
+      <ClientBoard
+        job={job}
+        shootDays={(days ?? []) as ShootDay[]}
+        initialScenes={scenes ?? []}
+      />
     </main>
   )
 }

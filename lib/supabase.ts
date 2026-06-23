@@ -2,23 +2,36 @@ import { createClient } from '@supabase/supabase-js'
 
 export type SceneStatus = 'upcoming' | 'inprogress' | 'complete'
 export type Unit = 'a' | 'b'
+export type ProductionType = 'commercial' | 'film' | 'series'
 
 export interface Job {
   id: string
   title: string
-  shoot_date: string
+  shoot_date: string | null
   location: string
   units: 1 | 2
   qtake_url: string | null
+  type: ProductionType
   admin_token: string
   op_token: string
   client_token: string
   created_at: string
 }
 
+export interface ShootDay {
+  id: string
+  job_id: string
+  shoot_date: string | null
+  label: string
+  location: string | null
+  sort_order: number
+  created_at: string
+}
+
 export interface Scene {
   id: string
   job_id: string
+  shoot_day_id: string | null
   scene_number: string
   title: string
   location: string
